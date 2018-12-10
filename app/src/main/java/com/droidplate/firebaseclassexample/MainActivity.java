@@ -149,6 +149,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Validate text fields
+     * @param email
+     * @param password
+     * @return
+     */
     private boolean dataValidate(String email, String password) {
 
         if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
