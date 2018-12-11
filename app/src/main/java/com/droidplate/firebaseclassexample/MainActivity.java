@@ -19,6 +19,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.regex.Pattern;
 
@@ -26,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private EditText emailEdt, passwordEdt;
     private FirebaseAuth firebaseAuth;
+    private DatabaseReference mRef;
     private Button registerButton, loginButton;
     String email, password;
     ProgressDialog pd;
@@ -54,6 +60,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
          */
         firebaseAuth = FirebaseAuth.getInstance();
 
+        /**
+         * Realtime Database
+         */
+        mRef = FirebaseDatabase.getInstance().getReference();
+
+
+
+
+
         emailEdt = findViewById(R.id.editTextEmail);
         passwordEdt = findViewById(R.id.editTextPassword);
         registerButton = findViewById(R.id.registerButton);
@@ -65,6 +80,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        mRef.child("users").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+               User user = dataSnapshot.getValue(User.class);
+                Toast.makeText(MainActivity.this, "name: " + user.getName(), Toast.LENGTH_SHORT).show();
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 
     /**
      * Register user with email and password
@@ -85,6 +118,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                     Toast.makeText(MainActivity.this, "Sign up Successful", Toast.LENGTH_SHORT).show();
+
+                    User user = new User();
+                    user.setEmail(email);
+                    user.setName("Melody");
+                    saveUserDetails(user);
+
                     pd.hide();
                 } else {
                     Toast.makeText(MainActivity.this, "Sign up failed", Toast.LENGTH_SHORT).show();
@@ -95,6 +134,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
     }
+
+    /**
+     * Save user data to firebase
+     * @param user
+     */
+    private void saveUserDetails(User user){
+        mRef.child("users").setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if(task.isSuccessful()){
+                    Toast.makeText(MainActivity.this, "User data is saved", Toast.LENGTH_SHORT).show();
+                }else {
+
+                    Toast.makeText(MainActivity.this, "Saving to users failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
 
     /**
      * Login user with email and password
